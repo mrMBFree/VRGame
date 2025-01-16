@@ -105,8 +105,8 @@ Material:
     - _MediumTilingDistance: 100
     - _Metallic: 0
     - _Mode: 0
-    - _NormalStrength: 0.75
-    - _NormalTiling: 0.14
+    - _NormalStrength: 0.68
+    - _NormalTiling: 0.4
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _ProbeReflectionIntensity: 0
