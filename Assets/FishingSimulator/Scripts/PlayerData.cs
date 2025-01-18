@@ -50,9 +50,9 @@ public class PlayerData : MonoBehaviour
     public Vector3 GetSavedPlayerPosition()
     {
         // default: Vector3(1061.54004,43,2931.80005)
-        float x = PlayerPrefs.GetFloat("PlayerX", 1061.54004f);
-        float y = PlayerPrefs.GetFloat("PlayerY", 43f);
-        float z = PlayerPrefs.GetFloat("PlayerZ", 2931.80005f);
+        float x = PlayerPrefs.GetFloat("PlayerX", 130f);
+        float y = PlayerPrefs.GetFloat("PlayerY", 55f);
+        float z = PlayerPrefs.GetFloat("PlayerZ", 230f);
 
         return new Vector3(x, y, z);
     }

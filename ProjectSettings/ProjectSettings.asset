@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: Company
-  productName: VrGame
+  productName: VrGame2
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -141,6 +141,7 @@ PlayerSettings:
   tvOSBundleVersion: 1.0
   bundleVersion: 0.1
   preloadedAssets:
+  - {fileID: 0}
   - {fileID: 11400000, guid: 7c89cae207b09824ca9288f3c498d894, type: 2}
   - {fileID: 11400000, guid: 7ca29abde975a4c40adce85de00498a5, type: 2}
   - {fileID: 11400000, guid: 71955951cbb16ad4a81daeccaf652687, type: 2}
@@ -166,7 +167,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: com.Company.VrGame
+    Android: com.Company.VrGame2
     Standalone: com.DefaultCompany.VrGame-terrain
   buildNumber:
     Standalone: 0
