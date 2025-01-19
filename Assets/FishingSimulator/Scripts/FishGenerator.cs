@@ -23,10 +23,10 @@ public class FishGenerator : MonoBehaviour
         GameObject player = GameObject.Find("Main Camera");
         float distance = Vector3.Distance(player.transform.position, transform.position);
         MeshRenderer waterMeshRenderer = this.GetComponent<MeshRenderer>();
-        float lakeRadius = waterMeshRenderer.bounds.size.x / 3f;
-        if (distance < lakeRadius + 100f && fishCount < maxFishCount)
+        float lakeRadius = waterMeshRenderer.bounds.size.x / 2f;
+        if (distance < lakeRadius + 0f && fishCount < maxFishCount)
         {
-            float generateRadius = lakeRadius - 50f;
+            float generateRadius = lakeRadius - 80f;
             Vector3 randomPos = new Vector3(transform.position.x + Random.Range(-generateRadius, generateRadius),
                 transform.position.y - 10f,
                 transform.position.z + Random.Range(-generateRadius, generateRadius));
@@ -39,7 +39,7 @@ public class FishGenerator : MonoBehaviour
     void ChangeFishDirection()
     {
         MeshRenderer waterMeshRenderer = this.GetComponent<MeshRenderer>();
-        float lakeRadius = waterMeshRenderer.bounds.size.x / 3f;
+        float lakeRadius = waterMeshRenderer.bounds.size.x / 2f;
         GameObject[] fishes = GameObject.FindGameObjectsWithTag("Fish");
         foreach (GameObject fish in fishes)
         {

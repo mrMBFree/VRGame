@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -111,6 +111,11 @@ public class FishingRod : MonoBehaviour
                     alertCanvas.gameObject.SetActive(true);
                 } else
                 {
+                    directionFish = (rodTip.transform.position - caughtFish.transform.position).normalized; // Odwracamy kolejność, żeby kierunek był DO gracza
+                    caughtFish.transform.LookAt(rodTip.transform.position);
+                    caughtFish.transform.Translate(directionFish * fishSwimSpeed*3 * Time.deltaTime, Space.World);
+                    hook.transform.position = caughtFish.transform.position;
+                    fishDistance = Vector3.Distance(hook.transform.position, rodTip.transform.position);
                     alertCanvas.gameObject.SetActive(false);
                 }
             }
