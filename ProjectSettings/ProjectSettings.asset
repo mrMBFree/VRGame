@@ -12,8 +12,8 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
-  productName: VRGAME-1
+  companyName: DSW
+  productName: Fishing
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -143,11 +143,6 @@ PlayerSettings:
   preloadedAssets:
   - {fileID: 0}
   - {fileID: 11400000, guid: 7c89cae207b09824ca9288f3c498d894, type: 2}
-  - {fileID: 11400000, guid: 7ca29abde975a4c40adce85de00498a5, type: 2}
-  - {fileID: 11400000, guid: 71955951cbb16ad4a81daeccaf652687, type: 2}
-  - {fileID: 11400000, guid: a740a0631213b77479cc8f31d7419df6, type: 2}
-  - {fileID: 4678911935730704636, guid: 7332bf31b18a63c4098dacd28bb24a5d, type: 2}
-  - {fileID: 881254159923473334, guid: e24d040e2602b284b8c984c92dfe8301, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -168,14 +163,14 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: com.DefaultCompany.VRGAME1
+    Android: com.DSW.Fishing
     Standalone: com.DefaultCompany.com.unity.template.vr
   buildNumber:
     Standalone: 0
     VisionOS: 0
     iPhone: 0
     tvOS: 0
-  overrideDefaultApplicationIdentifier: 1
+  overrideDefaultApplicationIdentifier: 0
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 24
   AndroidTargetSdkVersion: 0

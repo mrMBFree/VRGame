@@ -439,6 +439,14 @@ PrefabInstance:
       propertyPath: playerDataObj
       value: 
       objectReference: {fileID: 1850190146}
+    - target: {fileID: 4071901075776111045, guid: 907c270fc467922499bc96ae78042f23, type: 3}
+      propertyPath: positionplayer
+      value: 
+      objectReference: {fileID: 1577749891}
+    - target: {fileID: 4071901075776111045, guid: 907c270fc467922499bc96ae78042f23, type: 3}
+      propertyPath: hookSpeedMultiplier
+      value: 22
+      objectReference: {fileID: 0}
     - target: {fileID: 4825806147046707288, guid: 907c270fc467922499bc96ae78042f23, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -458,6 +466,21 @@ PrefabInstance:
     - target: {fileID: 5414183004770200741, guid: 907c270fc467922499bc96ae78042f23, type: 3}
       propertyPath: m_AnchorMin.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5678365384411687600, guid: 907c270fc467922499bc96ae78042f23, type: 3}
+      propertyPath: m_text
+      value: 'Move - Left Joystick
+
+        Cast - Left Trigger
+
+        Wind Up
+        - Right Trigger
+
+        Cancel - X Button
+
+        Tutorial - A Button
+
+'
       objectReference: {fileID: 0}
     - target: {fileID: 5744397763799542876, guid: 907c270fc467922499bc96ae78042f23, type: 3}
       propertyPath: m_TrackingStateInput.m_Action.m_Name
@@ -481,7 +504,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8527134399892799268, guid: 907c270fc467922499bc96ae78042f23, type: 3}
       propertyPath: m_MoveSpeed
-      value: 0
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8527134399892799268, guid: 907c270fc467922499bc96ae78042f23, type: 3}
       propertyPath: m_LeftHandMoveAction.m_UseReference
@@ -822,11 +845,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8409316696080705557, guid: 5f78d043ac7d6fc44abb2c1bb33a3746, type: 3}
       propertyPath: m_LocalScale.x
-      value: 434.2
+      value: 484.85
       objectReference: {fileID: 0}
     - target: {fileID: 8409316696080705557, guid: 5f78d043ac7d6fc44abb2c1bb33a3746, type: 3}
       propertyPath: m_LocalScale.y
-      value: 509.2
+      value: 520
       objectReference: {fileID: 0}
     - target: {fileID: 8409316696080705557, guid: 5f78d043ac7d6fc44abb2c1bb33a3746, type: 3}
       propertyPath: m_LocalScale.z
@@ -834,15 +857,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8409316696080705557, guid: 5f78d043ac7d6fc44abb2c1bb33a3746, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 274.9
+      value: 303
       objectReference: {fileID: 0}
     - target: {fileID: 8409316696080705557, guid: 5f78d043ac7d6fc44abb2c1bb33a3746, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 29.6
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 8409316696080705557, guid: 5f78d043ac7d6fc44abb2c1bb33a3746, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 544.3
+      value: 535.3
       objectReference: {fileID: 0}
     - target: {fileID: 8409316696080705557, guid: 5f78d043ac7d6fc44abb2c1bb33a3746, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1129,6 +1152,11 @@ Transform:
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2021524861978616031, guid: 1b6bf5b4e8eca97439d558dc14bc7176, type: 3}
   m_PrefabInstance: {fileID: 1944508526}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1577749891 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 663423858135601579, guid: 907c270fc467922499bc96ae78042f23, type: 3}
+  m_PrefabInstance: {fileID: 513127561}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1684841514
 GameObject:
@@ -1601,7 +1629,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4910679713236375819, guid: d35442ab60c6bfd49b2f113417810e9e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3
+      value: 3.37
       objectReference: {fileID: 0}
     - target: {fileID: 4910679713236375819, guid: d35442ab60c6bfd49b2f113417810e9e, type: 3}
       propertyPath: m_LocalPosition.z

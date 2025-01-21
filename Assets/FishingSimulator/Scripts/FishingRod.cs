@@ -9,7 +9,7 @@ public class FishingRod : MonoBehaviour
 {
     public GameObject hook;
     public Slider powerBar;
-    public float hookSpeedMultiplier = 5f;
+    public float hookSpeedMultiplier = 14f;
     public float windUpSpeed = 3f;
     public float fishSwimSpeed = 1.5f;
     public float messageDisplayDuration = 5.0f;
@@ -44,6 +44,8 @@ public class FishingRod : MonoBehaviour
     public GameObject audioObj;
 
     public GameObject alertCanvas;
+    private float waterLevelY; // Pozycja Y poziomu wody
+    public Transform positionplayer;
 
 
     // Start is called before the first frame update
@@ -54,6 +56,15 @@ public class FishingRod : MonoBehaviour
         playerData = playerDataObj.GetComponent<PlayerData>();
         playerData.LoadData();
         UpdateLevelInfo();
+        // Pobierz poziom wody z pozycji obiektu waterPlane
+        if (waterPlane != null)
+        {
+            waterLevelY = waterPlane.transform.position.y;
+        }
+        else
+        {
+            Debug.LogError("Nie przypisano obiektu waterPlane!");
+        }
     }
 
     // Update is called once per frame
@@ -72,7 +83,7 @@ public class FishingRod : MonoBehaviour
             if (initialFishDistance == -1)
             {
                 initialFishDistance = fishDistance;
-                ShowMessage("Fish got hooked!", new Color(255, 165, 0), messageDisplayDuration);
+                ShowMessage("    Fish got hooked!", new Color(255, 165, 0), messageDisplayDuration);
                 // start battle
                 battleBar.gameObject.SetActive(true);
             }
@@ -111,8 +122,11 @@ public class FishingRod : MonoBehaviour
                     alertCanvas.gameObject.SetActive(true);
                 } else
                 {
-                    directionFish = (rodTip.transform.position - caughtFish.transform.position).normalized; // Odwracamy kolejność, żeby kierunek był DO gracza
-                    caughtFish.transform.LookAt(rodTip.transform.position);
+                    Vector3 targetPosition = rodTip.transform.position;
+                    // Ogranicz pozycję Y celu (rodTip) do poziomu wody
+                    targetPosition.y = waterPlane.transform.position.y;
+                    directionFish = (targetPosition - caughtFish.transform.position).normalized; // Odwracamy kolejność, żeby kierunek był DO gracza
+                    caughtFish.transform.LookAt(targetPosition);
                     caughtFish.transform.Translate(directionFish * fishSwimSpeed*3 * Time.deltaTime, Space.World);
                     hook.transform.position = caughtFish.transform.position;
                     fishDistance = Vector3.Distance(hook.transform.position, rodTip.transform.position);
@@ -174,13 +188,16 @@ public class FishingRod : MonoBehaviour
             // cast fishing
             if (device.TryGetFeatureValue(UnityEngine.XR.CommonUsages.triggerButton, out triggerValue) && triggerValue)
             {
-                Debug.Log("Trigger button is pressed.");
-                if (!isCasting)
+                if (!battleBar.IsActive())
                 {
-                    isCasting = true;
-                    InitPowerBar();
+                    Debug.Log("Trigger button is pressed.");
+                    if (!isCasting)
+                    {
+                        isCasting = true;
+                        InitPowerBar();
+                    }
+                    Casting();
                 }
-                Casting();
             } else
             {   
                 if (isCasting)
@@ -200,9 +217,10 @@ public class FishingRod : MonoBehaviour
                         float distanceFromLakeCenter = Vector3.Distance(hook.transform.position, waterPlane.transform.position);
                         MeshRenderer waterMeshRenderer = waterPlane.GetComponent<MeshRenderer>();
                         float lakeRadius = waterMeshRenderer.bounds.size.x / 2f;
-                        if (distanceFromLakeCenter > lakeRadius)
+                        if (distanceFromLakeCenter > (lakeRadius-70))
                         {
                             EndFishing();
+                            ShowMessage("  Missed the water! Try again.!", new Color(1f, 0f, 0f), messageDisplayDuration);
                             return;
                         }
                     }
@@ -210,10 +228,13 @@ public class FishingRod : MonoBehaviour
             }
             // end fishing
             bool primaryButtonValue;
-            if (device.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out primaryButtonValue) && primaryButtonValue)
+            if (!battleBar.IsActive())
             {
-                Debug.Log("Primary button pressed");
-                EndFishing();
+                if (device.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out primaryButtonValue) && primaryButtonValue)
+                {
+                    Debug.Log("Primary button pressed");
+                    EndFishing();
+                }
             }
         }
         else if (leftHandDevices.Count > 1)
@@ -276,8 +297,26 @@ public class FishingRod : MonoBehaviour
         {
             Debug.Log("Found more than one right hand!");
         }
+        // Sprawdź, czy gracz znajduje się poniżej poziomu wody
+        if (transform.position.y < waterLevelY)
+        {
+            PlayerFellOffBoat();
+        }
     }
 
+    private void PlayerFellOffBoat()
+    {
+        // Przenieś gracza na zapisane koordynaty
+        Vector3 savedPosition = playerData.GetSavedPlayerPosition();
+        positionplayer.position = savedPosition;
+
+
+
+        // Wyświetl komunikat z dostarczoną funkcją ShowMessage
+        ShowMessage("You fell off the boat!", new Color(1f, 0f, 0f), messageDisplayDuration); // Czerwony komunikat na 3 sekundy
+
+        Debug.Log("Player fell off the boat and was reset to position: " + savedPosition);
+    }
     void InitPowerBar()
     {
         powerBar.gameObject.SetActive(true);
@@ -301,7 +340,7 @@ public class FishingRod : MonoBehaviour
         fishingLine.enabled = true;
         rodTip.GetComponent<LineRenderer>().enabled = true;
 
-        float hookSpeed = powerBar.value * hookSpeedMultiplier;
+        float hookSpeed = (powerBar.value+0.7f) * hookSpeedMultiplier;
         // GameObject hook = Instantiate(hook, transform.position, Quaternion.identity);
         hook.GetComponent<Rigidbody>().velocity = player_camera.transform.forward * hookSpeed;
         hook.GetComponent<Rigidbody>().useGravity = true;

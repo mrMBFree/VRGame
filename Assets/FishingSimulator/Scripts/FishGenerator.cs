@@ -14,10 +14,10 @@ public class FishGenerator : MonoBehaviour
 
     void Start()
     {
-        InvokeRepeating("ChangeFishDirection", 3f, 3f);
+        InvokeRepeating("ChangeFishDirection", 3f, 8f);
 
         // Opóźnione włączenie generowania ryb o 10 sekund
-        Invoke("EnableFishGeneration", 10f);
+        Invoke("EnableFishGeneration", 5f);
     }
 
 
@@ -32,12 +32,17 @@ public class FishGenerator : MonoBehaviour
         float lakeRadius = waterMeshRenderer.bounds.size.x / 2f;
         if (distance < lakeRadius + 40f && fishCount < maxFishCount)
         {
-            float generateRadius = lakeRadius - 80f;
+            float generateRadius = lakeRadius - 20f;
             Vector3 randomPos = new Vector3(transform.position.x + Random.Range(-generateRadius, generateRadius),
                 transform.position.y - 10f,
                 transform.position.z + Random.Range(-generateRadius, generateRadius));
-            GameObject fish = Instantiate(fishPrefab, randomPos, Quaternion.identity);
-            fish.GetComponent<Rigidbody>().velocity = Random.insideUnitSphere.normalized * swimSpeed;
+
+            Vector3 randomDirection = Random.insideUnitSphere.normalized; // Określamy kierunek ruchu
+            randomDirection.y = 0; // Opcjonalnie ograniczamy ruch tylko w płaszczyźnie poziomej
+            Quaternion targetRotation = Quaternion.LookRotation(randomDirection); // Tworzymy rotację zgodną z kierunkiem
+
+            GameObject fish = Instantiate(fishPrefab, randomPos, targetRotation);
+            fish.GetComponent<Rigidbody>().velocity = randomDirection * swimSpeed;
             fishCount++;
         }
     }
@@ -50,18 +55,41 @@ public class FishGenerator : MonoBehaviour
         foreach (GameObject fish in fishes)
         {
             float distance = Vector3.Distance(fish.transform.position, transform.position);
-            if (fish.transform.position.y  > transform.position.y - 5f || distance > lakeRadius)
+            if (fish.transform.position.y  > transform.position.y - 5f || distance > (lakeRadius-80))
             {
-                fish.transform.position = new Vector3(transform.position.x + Random.Range(-100f, 100f),
+                fish.transform.position = new Vector3(transform.position.x + Random.Range(-150f, 150f),
                     transform.position.y - 10f,
-                    transform.position.z + Random.Range(-100f, 100f));
+                    transform.position.z + Random.Range(-150f, 150f));
             }
-            Vector3 newDirection = new Vector3(Random.Range(-10f, 10f), 0f, Random.Range(-10f, 10f)).normalized;
-            fish.GetComponent<Rigidbody>().velocity = newDirection * swimSpeed;
+            //Vector3 randomDirection2 = Random.insideUnitSphere.normalized; // Określamy kierunek ruchu
+            //randomDirection2.y = 0f; // Opcjonalnie ograniczamy ruch tylko w płaszczyźnie poziomej
+                                     //Vector3 newDirection = new Vector3(Random.Range(-10f, 10f), 0f, Random.Range(-10f, 10f)).normalized;
+                                     // Obecny kierunek ryby
+            Vector3 currentDirection = fish.transform.forward;
+            currentDirection.y = 0;
+
+            // Losowy kąt w zakresie [-maxAngle, maxAngle]
+            float randomAngle = Random.Range(-50, 50);
+
+            // Obrót wokół osi Y (tylko w płaszczyźnie poziomej)
+            Quaternion rotation = Quaternion.Euler(0, randomAngle, 0);
+            //float rotationY = fish.GetComponent<Transform>().rotation.eulerAngles.y; 
+            // Nowy kierunek jako wynik rotacji
+            Vector3 newDirection = rotation * currentDirection;
+            newDirection.y = 0f;
+            // Ponownie normalizuj wektor, aby zachować stałą prędkość
+            newDirection = newDirection.normalized;
+            FishMovement fishMovement = fish.GetComponent<FishMovement>();
+            if (fishMovement != null)
+            {
+                fishMovement.SetNewDirection(newDirection, swimSpeed);
+            }
+            //fish.GetComponent<Rigidbody>().velocity = newDirection * swimSpeed;
+
         }
     }
     void EnableFishGeneration()
     {
-        fishGenerationAllowed = true; // Włącz generowanie ryb po 10 sekundach
+        fishGenerationAllowed = true; // Włącz generowanie ryb po 5 sekundach
     }
 }
