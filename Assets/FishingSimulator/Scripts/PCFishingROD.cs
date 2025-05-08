@@ -1,14 +1,15 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+
 public class PCFishingROD : MonoBehaviour
 {
     public GameObject hook;
     public Slider powerBar;
-    public float hookSpeedMultiplier = 14f;
+    public float baseHookSpeedMultiplier = 14f;
+    public float betterRodMultiplier = 1.5f;
     public float windUpSpeed = 3f;
     public float fishSwimSpeed = 1.5f;
     public float messageDisplayDuration = 5.0f;
@@ -22,9 +23,10 @@ public class PCFishingROD : MonoBehaviour
     public TextMeshProUGUI TMPDistance;
     public TextMeshProUGUI TMPMessage;
     public Image Tutorial;
-
     public Scrollbar battleBar;
     public GameObject targetBar;
+
+    public TextMeshProUGUI goldText;  // 👈 dodajemy to!
 
     private bool isCasting = false;
     private bool hookFlying = false;
@@ -41,7 +43,6 @@ public class PCFishingROD : MonoBehaviour
 
     public GameObject levelCanvas;
     public GameObject audioObj;
-
     public GameObject alertCanvas;
     private float waterLevelY;
     public Transform positionplayer;
@@ -53,182 +54,169 @@ public class PCFishingROD : MonoBehaviour
         playerData = playerDataObj.GetComponent<PlayerData>();
         playerData.LoadData();
         UpdateLevelInfo();
+        UpdateMoneyUI(); // 👈 zaktualizuj goldText na start
+
         if (waterPlane != null)
         {
             waterLevelY = waterPlane.transform.position.y;
         }
     }
 
-void Update()
-{
-    GameObject caughtFish = hook.GetComponent<Hook>().attachedFish;
-
-    // Walka z rybą
-    if (caughtFish != null)
+    void Update()
     {
-        ShowDistance();
+        GameObject caughtFish = hook.GetComponent<Hook>().attachedFish;
 
-        Vector3 directionFish = (caughtFish.transform.position - rodTip.transform.position).normalized;
-        caughtFish.transform.LookAt(rodTip.transform.position);
-        caughtFish.transform.Translate(directionFish * fishSwimSpeed * Time.deltaTime, Space.World);
-        hook.transform.position = caughtFish.transform.position;
-
-        float fishDistance = Vector3.Distance(hook.transform.position, rodTip.transform.position);
-
-        if (initialFishDistance == -1)
-        {
-            initialFishDistance = fishDistance;
-            ShowMessage("    Fish got hooked!", new Color(255, 165, 0), messageDisplayDuration);
-            battleBar.gameObject.SetActive(true);
-        }
-
-        // Battle bar update
-        if (battleBar.IsActive())
-        {
-            battleBarLastUpdateTime += Time.deltaTime;
-            if (battleBarLastUpdateTime >= battleBarUpdateInterval)
-            {
-                battleBarRandomWidth = UnityEngine.Random.Range(0.2f, 0.4f);
-                battleBarCenterOffset = UnityEngine.Random.Range(battleBarRandomWidth / 2, 1 - battleBarRandomWidth / 2) - 0.5f;
-
-                RectTransform battleBarRect = battleBar.GetComponent<RectTransform>();
-                RectTransform targetBarRect = targetBar.GetComponent<RectTransform>();
-
-                Vector2 anchoredPosition = targetBarRect.anchoredPosition;
-                anchoredPosition.x = battleBarRect.rect.width * battleBarCenterOffset;
-                targetBarRect.anchoredPosition = anchoredPosition;
-
-                Vector2 sizeDelta = targetBarRect.sizeDelta;
-                sizeDelta.x = battleBarRect.rect.width * battleBarRandomWidth;
-                targetBarRect.sizeDelta = sizeDelta;
-
-                battleBarLastUpdateTime = 0f;
-            }
-
-            float minValue = battleBarCenterOffset + 0.5f - battleBarRandomWidth / 2;
-            float maxValue = battleBarCenterOffset + 0.5f + battleBarRandomWidth / 2;
-
-            if (battleBar.value < minValue || battleBar.value > maxValue)
-            {
-                battleBarTimer += Time.deltaTime;
-                alertCanvas.gameObject.SetActive(true);
-            }
-            else
-            {
-                Vector3 targetPosition = rodTip.transform.position;
-                targetPosition.y = waterPlane.transform.position.y;
-
-                directionFish = (targetPosition - caughtFish.transform.position).normalized;
-                caughtFish.transform.LookAt(targetPosition);
-                caughtFish.transform.Translate(directionFish * fishSwimSpeed * 3 * Time.deltaTime, Space.World);
-                hook.transform.position = caughtFish.transform.position;
-
-                fishDistance = Vector3.Distance(hook.transform.position, rodTip.transform.position);
-                alertCanvas.gameObject.SetActive(false);
-            }
-        }
-
-        if (fishDistance < 20f)
-        {
-            string message = "Success!";
-            int previousLevel = playerData.level;
-            caughtFish.SetActive(false);
-            hook.GetComponent<Hook>().attachedFish = null;
-            EndFishing();
-
-            playerData.AddExperience(10);
-            UpdateLevelInfo();
-            int currentLevel = playerData.level;
-
-            message += currentLevel > previousLevel ? "\nLevel Up!" : "\n+10 Exp";
-            ShowMessage(message, new Color(50, 205, 50), messageDisplayDuration);
-
-            Transform catchFishObjTransform = audioObj.transform.Find("CatchFish");
-            if (catchFishObjTransform != null)
-            {
-                catchFishObjTransform.GetComponent<AudioSource>().Play();
-            }
-        }
-        else if (fishDistance > initialFishDistance + 200f || battleBarTimer > battleBarTimeThreshold)
-        {
-            ShowMessage("Failed!", new Color(255, 69, 0), messageDisplayDuration);
-            caughtFish.SetActive(false);
-            hook.GetComponent<Hook>().attachedFish = null;
-            EndFishing();
-        }
-    }
-
-    // Rzucanie wędki
-    if (Input.GetMouseButton(0) && !battleBar.IsActive())
-    {
-        if (!isCasting)
-        {
-            isCasting = true;
-            InitPowerBar();
-        }
-        Casting();
-    }
-    else if (Input.GetMouseButtonUp(0) && !battleBar.IsActive())
-    {
-        if (isCasting)
-        {
-            EndCasting();
-        }
-
-        ShowDistance();
-
-        if (hookFlying && hook.transform.position.y <= waterPlane.transform.position.y - 10f)
-        {
-            hook.GetComponent<Rigidbody>().useGravity = false;
-            hook.GetComponent<Rigidbody>().velocity = Vector3.zero;
-            hookFlying = false;
-
-            float distanceFromLakeCenter = Vector3.Distance(hook.transform.position, waterPlane.transform.position);
-            float lakeRadius = waterPlane.GetComponent<MeshRenderer>().bounds.size.x / 2f;
-            if (distanceFromLakeCenter > (lakeRadius - 70))
-            {
-                EndFishing();
-                ShowMessage("  Missed the water! Try again.!", new Color(1f, 0f, 0f), messageDisplayDuration);
-                return;
-            }
-        }
-    }
-
-    // Zwijanie (prawo)
-    if (Input.GetMouseButton(1))
-    {
         if (caughtFish != null)
         {
-            windUpSpeed = playerData.level * 3f;
-            Vector3 windUpDirection = (rodTip.transform.position - caughtFish.transform.position).normalized;
-            if (caughtFish.transform.position.y > waterPlane.transform.position.y - 5f)
-            {
-                windUpDirection.y = 0;
-            }
+            ShowDistance();
+            Vector3 directionFish = (caughtFish.transform.position - rodTip.transform.position).normalized;
             caughtFish.transform.LookAt(rodTip.transform.position);
-            caughtFish.transform.Translate(windUpDirection * windUpSpeed * Time.deltaTime, Space.World);
+            caughtFish.transform.Translate(directionFish * fishSwimSpeed * Time.deltaTime, Space.World);
             hook.transform.position = caughtFish.transform.position;
 
-            if (battleBar.value < 1)
+            float fishDistance = Vector3.Distance(hook.transform.position, rodTip.transform.position);
+
+            if (initialFishDistance == -1)
             {
-                battleBar.value += battleBarIncreaseSpeed * Time.deltaTime;
+                initialFishDistance = fishDistance;
+                ShowMessage("Fish got hooked!", new Color(1f, 0.65f, 0f), messageDisplayDuration);
+                battleBar.gameObject.SetActive(true);
+            }
+
+            if (battleBar.IsActive())
+            {
+                battleBarLastUpdateTime += Time.deltaTime;
+                if (battleBarLastUpdateTime >= battleBarUpdateInterval)
+                {
+                    battleBarRandomWidth = UnityEngine.Random.Range(0.2f, 0.4f);
+                    battleBarCenterOffset = UnityEngine.Random.Range(battleBarRandomWidth / 2, 1 - battleBarRandomWidth / 2) - 0.5f;
+                    RectTransform battleBarRect = battleBar.GetComponent<RectTransform>();
+                    RectTransform targetBarRect = targetBar.GetComponent<RectTransform>();
+                    Vector2 anchoredPosition = targetBarRect.anchoredPosition;
+                    anchoredPosition.x = battleBarRect.rect.width * battleBarCenterOffset;
+                    targetBarRect.anchoredPosition = anchoredPosition;
+                    Vector2 sizeDelta = targetBarRect.sizeDelta;
+                    sizeDelta.x = battleBarRect.rect.width * battleBarRandomWidth;
+                    targetBarRect.sizeDelta = sizeDelta;
+                    battleBarLastUpdateTime = 0f;
+                }
+
+                float minValue = battleBarCenterOffset + 0.5f - battleBarRandomWidth / 2;
+                float maxValue = battleBarCenterOffset + 0.5f + battleBarRandomWidth / 2;
+
+                if (battleBar.value < minValue || battleBar.value > maxValue)
+                {
+                    battleBarTimer += Time.deltaTime;
+                    alertCanvas.gameObject.SetActive(true);
+                }
+                else
+                {
+                    Vector3 targetPosition = rodTip.transform.position;
+                    targetPosition.y = waterPlane.transform.position.y;
+                    directionFish = (targetPosition - caughtFish.transform.position).normalized;
+                    caughtFish.transform.LookAt(targetPosition);
+                    caughtFish.transform.Translate(directionFish * fishSwimSpeed * 3 * Time.deltaTime, Space.World);
+                    hook.transform.position = caughtFish.transform.position;
+                    fishDistance = Vector3.Distance(hook.transform.position, rodTip.transform.position);
+                    alertCanvas.gameObject.SetActive(false);
+                }
+            }
+
+            if (fishDistance < 20f)
+            {
+                string message = "Success!";
+                int previousLevel = playerData.level;
+                caughtFish.SetActive(false);
+                hook.GetComponent<Hook>().attachedFish = null;
+                EndFishing();
+
+                playerData.AddExperience(10);
+                playerData.AddMoney(50); // dodajemy pieniądze
+                UpdateLevelInfo();
+                UpdateMoneyUI(); // 👈 zaktualizuj tekst gold
+                int currentLevel = playerData.level;
+
+                message += currentLevel > previousLevel ? "\nLevel Up!" : "\n+10 Exp";
+                message += "\n+50 $";
+                ShowMessage(message, new Color(0.2f, 0.8f, 0.2f), messageDisplayDuration);
+
+                Transform catchFishObjTransform = audioObj.transform.Find("CatchFish");
+                if (catchFishObjTransform != null)
+                {
+                    catchFishObjTransform.GetComponent<AudioSource>().Play();
+                }
+            }
+            else if (fishDistance > initialFishDistance + 200f || battleBarTimer > battleBarTimeThreshold)
+            {
+                ShowMessage("Failed!", new Color(1f, 0.27f, 0f), messageDisplayDuration);
+                caughtFish.SetActive(false);
+                hook.GetComponent<Hook>().attachedFish = null;
+                EndFishing();
             }
         }
-    }
-    else
-    {
-        if (caughtFish != null && battleBar.value > 0)
+
+        if (Input.GetMouseButton(0) && !battleBar.IsActive())
         {
-            battleBar.value -= battleBarDecreaseSpeed * Time.deltaTime;
+            if (!isCasting)
+            {
+                isCasting = true;
+                InitPowerBar();
+            }
+            Casting();
         }
+        else if (Input.GetMouseButtonUp(0) && !battleBar.IsActive())
+        {
+            if (isCasting) EndCasting();
+            ShowDistance();
+            if (hookFlying && hook.transform.position.y <= waterPlane.transform.position.y - 10f)
+            {
+                hook.GetComponent<Rigidbody>().useGravity = false;
+                hook.GetComponent<Rigidbody>().velocity = Vector3.zero;
+                hookFlying = false;
+
+                float distanceFromLakeCenter = Vector3.Distance(hook.transform.position, waterPlane.transform.position);
+                float lakeRadius = waterPlane.GetComponent<MeshRenderer>().bounds.size.x / 2f;
+                if (distanceFromLakeCenter > (lakeRadius - 70))
+                {
+                    EndFishing();
+                    ShowMessage("Missed the water! Try again.", new Color(1f, 0f, 0f), messageDisplayDuration);
+                    return;
+                }
+            }
+        }
+
+        if (Input.GetMouseButton(1))
+        {
+            if (caughtFish != null)
+            {
+                windUpSpeed = playerData.level * 3f;
+                Vector3 windUpDirection = (rodTip.transform.position - caughtFish.transform.position).normalized;
+                if (caughtFish.transform.position.y > waterPlane.transform.position.y - 5f)
+                {
+                    windUpDirection.y = 0;
+                }
+                caughtFish.transform.LookAt(rodTip.transform.position);
+                caughtFish.transform.Translate(windUpDirection * windUpSpeed * Time.deltaTime, Space.World);
+                hook.transform.position = caughtFish.transform.position;
+
+                if (battleBar.value < 1)
+                {
+                    battleBar.value += battleBarIncreaseSpeed * Time.deltaTime;
+                }
+            }
+        }
+        else
+        {
+            if (caughtFish != null && battleBar.value > 0)
+            {
+                battleBar.value -= battleBarDecreaseSpeed * Time.deltaTime;
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.E)) EndFishing();
+        if (Input.GetKeyDown(KeyCode.T)) Tutorial.gameObject.SetActive(!Tutorial.gameObject.activeSelf);
+        if (transform.position.y < waterLevelY) PlayerFellOffBoat();
     }
-
-    if (Input.GetKeyDown(KeyCode.E)) EndFishing();
-    if (Input.GetKeyDown(KeyCode.T)) Tutorial.gameObject.SetActive(!Tutorial.gameObject.activeSelf);
-
-    if (transform.position.y < waterLevelY) PlayerFellOffBoat();
-}
-
 
     private void PlayerFellOffBoat()
     {
@@ -244,9 +232,23 @@ void Update()
     }
 
     void Casting()
+{
+    powerBar.value += Time.deltaTime;
+
+    // Obliczamy aktualną prędkość rzutu
+    float hookSpeed = (powerBar.value + 0.7f) * baseHookSpeedMultiplier;
+    if (playerData.hasBetterRod)
     {
-        powerBar.value += Time.deltaTime;
+        hookSpeed *= betterRodMultiplier; // Jeśli gracz ma lepszą wędkę, mnożymy przez mnożnik
     }
+
+    // Wypisujemy prędkość rzutu w konsoli
+    Debug.Log("Current Hook Speed: " + hookSpeed);
+
+    // Opcjonalnie, możesz dodać wyświetlanie siły wyrzutu w UI, jeśli chcesz
+    // np. powerText.text = "Power: " + powerBar.value;
+}
+
 
     void EndCasting()
     {
@@ -259,7 +261,10 @@ void Update()
         fishingLine.enabled = true;
         rodTip.GetComponent<LineRenderer>().enabled = true;
 
-        float hookSpeed = (powerBar.value + 0.7f) * hookSpeedMultiplier;
+        float speedMultiplier = baseHookSpeedMultiplier;
+        if (playerData.hasBetterRod) speedMultiplier *= betterRodMultiplier;
+
+        float hookSpeed = (powerBar.value + 0.7f) * speedMultiplier;
         hook.GetComponent<Rigidbody>().velocity = player_camera.transform.forward * hookSpeed;
         hook.GetComponent<Rigidbody>().useGravity = true;
         hookFlying = true;
@@ -310,6 +315,13 @@ void Update()
         levelInfo.text = "LEVEL " + playerData.level;
         expInfo.text = playerData.experience + "/" + maxExp;
         expSlider.value = (float)playerData.experience / maxExp;
+
+        UpdateMoneyUI(); // również aktualizuj pieniądze przy level info
+    }
+
+    public void UpdateMoneyUI()
+    {
+        goldText.text = "Money: $" + playerData.money;
     }
 
     void OnApplicationQuit()
