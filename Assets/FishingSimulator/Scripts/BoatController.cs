@@ -4,76 +4,86 @@ using UnityEngine;
 
 public class BoatController : MonoBehaviour
 {
-    public Transform player;                // Referencja do gracza
-    public Transform boatSeat;              // Miejsce, gdzie gracz „siada” na łódce
-    public float moveSpeed = 5f;
-    public float turnSpeed = 50f;
+    public Transform player;
+    public Transform boatSeat;
+    public float maxSpeed = 6f;
+    public float acceleration = 2f;
+    public float deceleration = 2f;
+    public float turnSpeed = 90f; // stopnie na sekundę
     public bool isPlayerOnBoat = false;
 
+    private float currentSpeed = 0f;
     private CharacterController playerController;
-
+    private Camera playerCamera;
 
     void Start()
     {
         playerController = player.GetComponent<CharacterController>();
-
+        playerCamera = Camera.main;
     }
 
     void Update()
     {
-        // Wejście/wyjście z łódki
         if (Input.GetKeyDown(KeyCode.L))
         {
             if (!isPlayerOnBoat)
-            {
                 EnterBoat();
-            }
             else
-            {
                 ExitBoat();
-            }
         }
 
-        // Sterowanie łódką
         if (isPlayerOnBoat)
         {
-            float horizontal = Input.GetAxis("Horizontal");
-            float vertical = Input.GetAxis("Vertical");
+            HandleBoatMovement();
 
-            // Ruch do przodu/tyłu
-            transform.Translate(Vector3.forward * vertical * moveSpeed * Time.deltaTime);
-
-            // Obrót
-            transform.Rotate(Vector3.up * horizontal * turnSpeed * Time.deltaTime);
+            // Trzymanie gracza na siedzeniu
+            player.position = boatSeat.position;
+            player.rotation = boatSeat.rotation;
         }
+    }
+
+    void HandleBoatMovement()
+    {
+        float input = Input.GetAxis("Vertical");
+
+        // Przyspieszanie
+        if (Mathf.Abs(input) > 0.1f)
+        {
+            currentSpeed = Mathf.MoveTowards(currentSpeed, input * maxSpeed, acceleration * Time.deltaTime);
+
+            // Obracanie w kierunku kamery
+            Vector3 cameraForward = playerCamera.transform.forward;
+            cameraForward.y = 0f;
+            if (cameraForward != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(cameraForward);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+            }
+        }
+        else
+        {
+            // Zwalnianie do zera
+            currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, deceleration * Time.deltaTime);
+        }
+
+        // Przesunięcie łódki
+        transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime);
     }
 
     void EnterBoat()
     {
         isPlayerOnBoat = true;
-
-        // Przenieś gracza na siedzenie
         player.position = boatSeat.position;
         player.rotation = boatSeat.rotation;
-
-        player.SetParent(transform); // gracz staje się dzieckiem łódki
-
-        // Wyłącz kontrolę gracza
         if (playerController != null) playerController.enabled = false;
-
     }
 
     void ExitBoat()
     {
         isPlayerOnBoat = false;
-
-        player.SetParent(null); // ← odłączenie
-
-        // Odsuń gracza obok łódki
-        player.position = transform.position + transform.right * 2f;
-
-        // Włącz kontrolę gracza
+        player.position = boatSeat.position;
+        player.rotation = boatSeat.rotation;
         if (playerController != null) playerController.enabled = true;
-
+        currentSpeed = 0f;
     }
 }

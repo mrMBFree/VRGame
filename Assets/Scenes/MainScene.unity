@@ -1082,13 +1082,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hook: {fileID: 567454602}
   powerBar: {fileID: 2086084235}
-  hookSpeedMultiplier: 14
-  windUpSpeed: 3
-  fishSwimSpeed: 1.5
-  messageDisplayDuration: 5
-  battleBarIncreaseSpeed: 0.3
-  battleBarDecreaseSpeed: 0.15
-  battleBarTimeThreshold: 3
+  hookSpeedMultiplier: 22
+  windUpSpeed: 30
+  fishSwimSpeed: 5
+  messageDisplayDuration: 3
+  battleBarIncreaseSpeed: 0.4
+  battleBarDecreaseSpeed: 0.25
+  battleBarTimeThreshold: 10
   battleBarUpdateInterval: 3
   waterPlane: {fileID: 1523178736}
   player_camera: {fileID: 1535675990}
@@ -3611,8 +3611,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 1195236908}
   boatSeat: {fileID: 837505371}
-  moveSpeed: 5
-  turnSpeed: 50
+  maxSpeed: 6
+  acceleration: 2
+  deceleration: 2
+  turnSpeed: 20
   isPlayerOnBoat: 0
 --- !u!1 &1535675990
 GameObject:
@@ -5110,7 +5112,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
