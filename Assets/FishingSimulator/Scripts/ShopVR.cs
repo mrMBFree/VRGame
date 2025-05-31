@@ -2,6 +2,7 @@
 using UnityEngine.XR;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class ShopVR : MonoBehaviour
 {
@@ -25,8 +26,8 @@ public class ShopVR : MonoBehaviour
     {
         shopPanel.SetActive(false);
 
-        if (rightRayPointer != null)
-            rightRayPointer.SetActive(false); // Ukryj promień na start
+      //  if (rightRayPointer != null)
+       //     rightRayPointer.SetActive(false); // Ukryj promień na start
     }
 
     void Update()
@@ -48,17 +49,19 @@ public class ShopVR : MonoBehaviour
 
     void ToggleShop()
     {
+        bool isActive = shopPanel.activeSelf;
         isShopOpen = !isShopOpen;
-        shopPanel.SetActive(isShopOpen);
+        shopPanel.SetActive(!isActive);
         Rod.SetActive(!isShopOpen);
         Level.SetActive(!isShopOpen);
+        EnableRayOnly();
 
         UpdateGoldText();
 
-        if (rightRayPointer != null)
-            rightRayPointer.SetActive(isShopOpen);
+        //if (rightRayPointer != null)
+        //    rightRayPointer.SetActive(isShopOpen);
 
-        Debug.Log("Shop toggled: " + (isShopOpen ? "ON" : "OFF"));
+        //Debug.Log("Shop toggled: " + (isShopOpen ? "ON" : "OFF"));
     }
 
     public void BuyBetterRod()
@@ -86,6 +89,30 @@ public class ShopVR : MonoBehaviour
     void UpdateGoldText()
     {
         goldText.text = "Money: $" + playerData.money;
+    }
+    void EnableRayOnly()
+    {
+        // Wyłącz wszystkie inne komponenty (jeśli trzeba) lub zostaw aktywne tylko potrzebne
+        // Włącz XR Ray Interactor
+        XRRayInteractor rayInteractor = rightRayPointer.GetComponent<XRRayInteractor>();
+        if (rayInteractor != null)
+        {
+            rayInteractor.enabled = true;
+        }
+
+        // Włącz Line Renderer
+        LineRenderer lineRenderer = rightRayPointer.GetComponent<LineRenderer>();
+        if (lineRenderer != null)
+        {
+            lineRenderer.enabled = true;
+        }
+
+        // Możesz też opcjonalnie wyłączyć inne interaktory (np. Direct Interactor)
+        XRDirectInteractor directInteractor = rightRayPointer.GetComponent<XRDirectInteractor>();
+        if (directInteractor != null)
+        {
+            directInteractor.enabled = false;
+        }
     }
 }
 

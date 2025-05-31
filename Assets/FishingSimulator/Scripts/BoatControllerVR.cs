@@ -2,6 +2,8 @@
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine;
 using UnityEngine.XR;
+using Unity.VisualScripting;
+using System.Collections;
 
 public class VROarRowing : MonoBehaviour
 {
@@ -20,16 +22,24 @@ public class VROarRowing : MonoBehaviour
     public Transform rightController;
 
     [Header("Rowing Parameters")]
-    public float movementForce = 0.5f;
-    public float rotationStrength = 0.003f;
-    public float detectionThreshold = 0.01f;
+    public float movementForce = 5f;
+    public float rotationStrength = 0.008f;
+    public float detectionThreshold = 0.005f;
     public float elipseHorizontalRadius = 0.7f;
     public float elipseVerticalRadius = 0.55f;
 
     private Vector3 targetPosition;
+    private Vector3 targetPosition2;
     private Quaternion targetRotation;
+    private float accumulatedYaw = 0f;
     private bool shouldMove = false;
     private bool leftpivot = false;
+    private bool wPrawe = false;
+    private bool wLewe = false;
+    private float pisLeft = 0f;
+    private bool movedByLeft = false;
+    private bool movedByRight = false;
+    private bool korutyna = false;
 
     [Header("Pivot Settings")]
     public Vector3 pivotLeftRowingPos = new Vector3(-28f, -6f, 32f);
@@ -51,8 +61,21 @@ public class VROarRowing : MonoBehaviour
         prevLeftLocalPos = leftOarPivot.InverseTransformPoint(leftController.position);
         prevRightLocalPos = rightOarPivot.InverseTransformPoint(rightController.position);
         SetRowingMode(false);
-       // Vector3 currentEuler = leftOarPivot.rotation.eulerAngles;
-       // leftOarPivot.rotation = Quaternion.Euler(currentEuler.x, currentEuler.y, 90f);
+        targetPosition = boatTransform.position;
+        targetRotation = boatTransform.rotation;
+        //targetPosition = Vector3.zero;
+        //targetRotation = Quaternion.identity;
+        // Vector3 currentEuler = leftOarPivot.rotation.eulerAngles;
+        // leftOarPivot.rotation = Quaternion.Euler(currentEuler.x, currentEuler.y, 90f);
+    }
+
+    private IEnumerator ResetOarFlagsAfterDelay(float delay)
+    {
+        korutyna = true;
+        yield return new WaitForSeconds(delay);
+        movedByLeft = false;
+        movedByRight = false;
+        korutyna = false;
     }
 
     void Update()
@@ -67,6 +90,8 @@ public class VROarRowing : MonoBehaviour
 
         if (aButtonPressed && !aButtonLastFrame)
         {
+
+
             isRowingMode = !isRowingMode;
             SetRowingMode(isRowingMode);
         }
@@ -80,21 +105,47 @@ public class VROarRowing : MonoBehaviour
 
         if (shouldMove)
         {
-            boatTransform.position = Vector3.Lerp(boatTransform.position, targetPosition, Time.deltaTime * 4f);
-            boatTransform.rotation = Quaternion.Slerp(boatTransform.rotation, targetRotation, Time.deltaTime * 4f);
+            //targetPosition = boatTransform.forward * movementForce * 4;
+            //boatTransform.position = Vector3.Lerp(boatTransform.position, targetPosition, Time.deltaTime * 4f);
+            // Jeśli oba wiosła poruszyły łódź w tej samej klatce – NIE obracaj
+            if (!(movedByLeft && movedByRight))
+            {
 
-            if (Vector3.Distance(boatTransform.position, targetPosition) < 0.001f)
+                boatTransform.rotation = Quaternion.Slerp(boatTransform.rotation, targetRotation, Time.deltaTime * 0.4f);
+            }
+            else
+            {
+                //targetPosition += boatTransform.forward * movementForce * 4;
+                boatTransform.position = Vector3.Lerp(boatTransform.position, targetPosition, Time.deltaTime * 2f);
+            }
+            if (Vector3.Distance(boatTransform.position, targetPosition) < 0.005f)
                 shouldMove = false;
+            if (!korutyna)
+            {
+                StartCoroutine(ResetOarFlagsAfterDelay(3f)); // lub inna wartość
+            }
         }
+        // Resetujemy flagi na koniec klatki
+
+
     }
 
     void SetRowingMode(bool enable)
     {
+        CharacterController cc = playerTransform.GetComponent<CharacterController>();
         if (enable)
         {
-            CharacterController cc = playerTransform.GetComponent<CharacterController>();
-            if (cc != null) cc.enabled = false;
+            targetPosition = boatTransform.position;
+            targetRotation = boatTransform.rotation;
 
+            if (cc != null)
+            {
+                cc.enabled = false;
+                cc.detectCollisions = !enable; // <- to dodaj
+            }
+
+
+            // 2️ Potem ustaw dokładną pozycję i rotację gracza
             playerTransform.position = seatTransform.position;
             playerTransform.rotation = seatTransform.rotation;
             if (cc != null) cc.enabled = true;
@@ -111,6 +162,8 @@ public class VROarRowing : MonoBehaviour
         }
         else
         {
+            playerTransform.SetParent(null);
+            if (cc != null) cc.enabled = true;
             leftOarPivot.localPosition = pivotRestingPos;
             leftOarPivot.localRotation = Quaternion.identity;
             rightOarPivot.localPosition = pivotRestingPos;
@@ -152,7 +205,7 @@ public class VROarRowing : MonoBehaviour
         Vector3 directionToController = controller.position - oarPivot.position;
         Quaternion lookRot = Quaternion.LookRotation(-directionToController, Vector3.up);
 
-        // Tylko rotacja X i Y – Z zostaje bez zmian (zachowujemy efekt, który miałeś wcześniej)
+        // Tylko rotacja X i Y – Z zostaje bez zmian (zachowujemy efekt, który miałem wcześniej)
         Vector3 euler = lookRot.eulerAngles;
         Quaternion targetRotation = Quaternion.Euler(euler.x, euler.y, angleZ);
         // Quaternion targetRotation = Quaternion.Euler(euler.x, euler.y, oarPivot.rotation.eulerAngles.z);
@@ -162,10 +215,11 @@ public class VROarRowing : MonoBehaviour
         //Debug.DrawLine(oarPivot.position, oarPivot.position + oarPivot.right * 0.5f, Color.red);
         //Debug.DrawLine(oarPivot.position, oarPivot.position + oarPivot.up * 0.5f, Color.green);
 
-        float localXDelta = currentLocalPos.x - prevLocalPos.x;
+        float localXDelta = prevLocalPos.x - currentLocalPos.x;
         if (localXDelta < -detectionThreshold)
         {
             ApplyRowingForce(isLeft);
+
         }
 
         prevLocalPos = currentLocalPos;
@@ -173,9 +227,23 @@ public class VROarRowing : MonoBehaviour
 
     void ApplyRowingForce(bool isLeft)
     {
-        targetPosition = boatTransform.position + boatTransform.forward * movementForce;
+       // Vector3 forward = boatTransform.forward.normalized;
+       // Vector3 newPos = boatTransform.position + forward * movementForce;
+
+       // newPos.y = boatTransform.position.y;
+       // targetPosition = boatTransform.position + boatTransform.forward * movementForce;
+        targetPosition = boatTransform.position + boatTransform.forward * movementForce *10;
         float direction = isLeft ? 1f : -1f;
-        targetRotation = boatTransform.rotation * Quaternion.Euler(0f, direction * rotationStrength, 0f);
+        accumulatedYaw = direction * rotationStrength;
+        targetRotation = boatTransform.rotation * Quaternion.Euler(0f, accumulatedYaw, 0f);
+        // Zachowaj oryginalne Y, by nie „opadało”
+
+       // targetPosition = newPos;
         shouldMove = true;
+        if (isLeft)
+            movedByLeft = true;
+        else
+            movedByRight = true;
+
     }
 }

@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Fish
   - FishingRod
+  - leftControler
+  - rightControler
   layers:
   - Default
   - TransparentFX
